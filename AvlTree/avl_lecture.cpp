@@ -1,0 +1,311 @@
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+struct node{
+	int key;
+	node* parent;
+	node* leftChild;
+	node* rightChild;
+};
+
+class AVLTree{
+	private:
+		node* root;
+		node* height;
+		node* searchRecursive(node* n, int value){
+			if (n == NULL) { 
+				return NULL;
+			}
+			if (value == n->key) {
+				return n;
+			} else if (value < n->key) { // going left
+				return searchRecursive(n->leftChild, value);
+			} else if (value > n->key) { // going right
+				return searchRecursive(n->rightChild, value);
+			}
+		}
+
+		void printNode(node* n) { // in-order traversal
+			if (n == NULL) {
+				return;
+			}
+			if (n->leftChild != NULL) {
+				printNode(n->leftChild);
+			}
+			if (n->rightChild != NULL) {
+				printNode(n->rightChild);
+			}
+			cout << n->key << " ";
+		}
+
+		node* treeMinimum(node* n) {
+			while (n->leftChild != NULL) { // there is a smaller value
+				n = n->leftChild;
+			}
+			return n;
+		}
+
+		void deleteTreePrivate(node* n) {
+			if (n == NULL) {
+				return;
+			}
+			if (n->leftChild != NULL) { // delete all left children
+				deleteTreePrivate(n->leftChild);
+			}
+			if (n->rightChild != NULL) { // delete all right children
+				deleteTreePrivate(n->rightChild);
+			}
+			if (root == n) {
+				root = NULL;
+			};
+			delete n;
+		}
+		int findheight(node* n)
+		{
+			// int h=0;
+			// if( n->leftChild !=NULL)
+			// {
+			// 	h += 1 + findheight(n->leftChild);
+			// }
+			// if( n->rightChild !=NULL)
+			// {
+			// 	h += 1 + findheight(n->rightChild);
+			// }
+			// return h;
+			if(n== NULL)
+			{
+				return -1;
+			}
+			return (1 + max(findheight(n->leftChild)), findheight(n->rightChild))
+		}
+		node* findViolations(node* n){
+			if( n== NULL)
+			{
+				return NULL;
+			}
+			if(abs(findheight(n->leftChild))- findheight(n->rightChild) > 1)
+			{
+				return n;
+			}
+			return findViolations(n->parent);
+		}
+		void leftRotate(node* k2, node* k1)
+		{
+			if(k2->parent != NULL)
+			{
+				if(k2->key < k2->parent->key)
+				{
+					k2->parent->leftChild = k1;
+				} else {
+					k2->parent->rightChild = k1;
+				}
+				k1->parent = k2->parent;
+			}
+			k2->rightChild = k1->leftChild; //pass th Y triangle to k2
+			if(k2->rightChild != NULL) {
+				k2->rightChild->parent = k2;
+			}
+			
+			k1->leftChild = k2;
+			k2->parent =k1;
+ 		}
+
+ 		void rightRotate(node* k2, node* k1)
+		{
+			if(k2->parent != NULL)
+			{
+				if(k2->key < k2->parent->key)
+				{
+					k2->parent->leftChild = k1;
+				} else {
+					k2->parent->rightChild = k1;
+				}
+				k1->parent = k2->parent;
+			}
+			k2->leftChild = k1->rightChild; //pass th Y triangle to k2
+			if(k2->leftChild != NULL) {
+				k2->leftChild->parent = k2;
+			}
+
+			k1->rightChild = k2;
+			k2->parent =k1;
+ 		}
+
+	public:
+		AVLTree(int k) {
+			root = new node;
+			root->key = k;
+			root->parent = NULL;
+			root->leftChild = NULL;
+			root->rightChild = NULL;
+
+			height =0;
+		}
+		~AVLTree() {
+			delete root; // need to delete ALL nodes
+		}
+
+		int insert(int value) {
+			// Initialize new node
+			node* newNode = new node;
+			newNode->key = value;
+			newNode->parent = NULL;
+			newNode->leftChild = NULL;
+			newNode->rightChild = NULL;
+
+			// Find out where it goes
+			node* tmp = root;
+			while (1) {
+				if (value < tmp->key) { // go left
+
+					if (tmp->leftChild == NULL) { // insert newNode
+						tmp->leftChild = newNode;
+						newNode->parent = tmp;
+						return 0;
+					}
+					tmp = tmp->leftChild;
+				} else if (value > tmp->key) {  // go right
+					if (tmp->rightChild == NULL) { // insert newNode
+						tmp->rightChild = newNode;
+						newNode->parent = tmp;
+						return 0;
+					}
+					tmp = tmp->rightChild;
+				} else { // duplicate value
+					delete newNode;
+					return -1;
+				}
+			}
+			//check if we broke thing, AVL condition
+			node* violator = findViolations(newNode->parent);
+			if(violator !=NULL) //we broke it
+			{
+				if(newNode->key < newNode->parent->key) // we are left
+				{
+					if(newNode->key < violator<key) //k1 is left
+					{
+
+					} else { // k1 is right
+
+					}
+				} else
+				{
+					
+				}
+			}
+		}
+		void inOrderPrint() {
+			printNode(root);
+		}
+		node* search(int value) {
+			return searchRecursive(root, value);
+		}
+
+		void deleteNode(int value) { // head node needs support
+			node* tmp = root;
+			while (tmp != NULL) {
+				if (tmp->key == value) { // found the node!
+					// != is our XOR operator
+					if ((tmp->leftChild != NULL) != (tmp->rightChild != NULL)) { // One of these is not null
+						if (tmp->leftChild != NULL) { // filling the hole with the left
+
+							if (value < tmp->parent->key) { // left of the parent
+								tmp->parent->leftChild = tmp->leftChild;
+							} else {  // right of the parent
+								tmp->parent->rightChild = tmp->leftChild;
+							}
+							tmp->leftChild->parent = tmp->parent;
+
+						} else { // filling the hole with the right
+
+							if (value < tmp->parent->key) { // left of the parent
+								tmp->parent->leftChild = tmp->rightChild;
+							} else {  // right of the parent
+								tmp->parent->rightChild = tmp->rightChild;
+							}
+							tmp->rightChild->parent = tmp->parent;
+
+						}
+						delete tmp;
+						return;
+					} else if (tmp->leftChild == tmp->rightChild) { // No children!
+						if (value < tmp->parent->key) {
+							tmp->parent->leftChild = NULL;
+						} else {
+							tmp->parent->rightChild = NULL;
+						}
+						delete tmp;
+						return;
+					} else { // There are two children
+						node* rightMin = treeMinimum(tmp->rightChild); // find the min from right sub-tree
+						
+						// Update parent pointers
+						if (value < tmp->parent->key) {
+							tmp->parent->leftChild = rightMin;
+						} else {
+							tmp->parent->rightChild = rightMin;
+						}
+						rightMin->parent = tmp->parent;
+
+						// Update left child
+						rightMin->leftChild = tmp->leftChild;
+						tmp->leftChild->parent = rightMin;
+
+						// Update right child
+						if (rightMin->key != tmp->rightChild->key) { // Checks if they are not the same
+							rightMin->rightChild = tmp->rightChild;
+							tmp->rightChild->parent = rightMin;
+						} // are we done?
+						//if (rightMin->key != rightMin->parent->key) // Continue from here
+							//return;
+						return;
+					}
+				} else {
+					if (value < tmp->key) { // move left
+						tmp = tmp->leftChild;
+					} else { // move right
+						tmp = tmp->rightChild;
+					}
+				}
+			}
+		}
+
+		void deleteTree() {
+			deleteTreePrivate(root);
+		}
+};
+
+int main() {
+	AVLTree bst(4);
+
+	// Test Insert
+	bst.insert(6);
+	bst.insert(2);
+	bst.insert(3);
+	bst.insert(9);
+	bst.insert(1);
+
+	// Test Delete
+	//bst.deleteNode(6);
+
+	// Test search
+	node* ret = bst.search(5);
+	if (ret != NULL) {
+		cout << "Found key: " << ret->key << endl;
+	} else {
+		cout << "Key not found!\n";
+	}
+
+	// Test tree Delete
+	cout << "Before delete: ";
+	bst.inOrderPrint();
+	bst.deleteTree();
+
+	// Print for check
+	cout << "\nAfter delete: ";
+	bst.inOrderPrint();
+	return 0;
+}
